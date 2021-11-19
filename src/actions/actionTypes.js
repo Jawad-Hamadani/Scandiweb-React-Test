@@ -1,0 +1,10 @@
+export const FETCH_PRODUCTS = "FETCH_PRODUCTS";
+export const CHANGE_CURRENCY = "CHANGE_CURRENCY";
+export const ADD_ITEM = "ADD_ITEM";
+export const APPEND_ITEM = "APPEND_ITEM";
+export const CHANGE_ITEM_AMOUNT = "CHANGE_ITEM_AMOUNT";
+export const REMOVE_ITEM = "REMOVE_ITEM";
+export const SHOW_CART = "SHOW_CART";
+export const HIDE_CART = "HIDE_CART";
+export const TOGGLE_CART = "TOGGLE_CART";
+export const CHANGE_SELECTED_ATTRIBUTE = "CHANGE_SELECTED_ATTRIBUTE";
