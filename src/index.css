@@ -5,12 +5,18 @@
   --green-color: #5ece7b;
   --main-font: "Raleway", sans-serif;
 }
+
+.container {
+  overflow: auto;
+  position: relative;
+  min-height: 100vh;
+}
+
 * {
   box-sizing: border-box;
 }
 html {
   scrollbar-width: thin;
-  min-height: 100vh;
 }
 
 body {
@@ -19,7 +25,7 @@ body {
   padding: 0;
   box-sizing: border-box;
   max-width: 100%;
-  min-height: 100vh;
+  height: 100%;
 }
 a {
   text-decoration: none;
@@ -28,7 +34,6 @@ a {
 hr {
   color: #e5e5e5;
 }
-
 nav {
   max-height: 60px;
   max-width: 100%;
@@ -58,6 +63,31 @@ nav li {
 nav a:hover {
   cursor: pointer;
 }
+#outOfStockbutton {
+  opacity: 0.5;
+}
+#outOfStockbutton:hover {
+  pointer-events: none;
+}
+.danger {
+  color: rgb(231, 82, 82);
+}
+.relative {
+  position: relative;
+}
+.light-font-weight {
+  font-weight: 400;
+}
+.strong-font-weight {
+  font-weight: 800;
+}
+.item-main-picture {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+
 .active-nav-link {
   color: var(--green-color);
   border-bottom: solid 2px var(--green-color);
@@ -138,26 +168,15 @@ nav a:hover {
   position: relative;
 }
 
-.custom-select {
-  position: relative;
-}
-
-select {
-  opacity: 0;
-  width: 2.5rem;
-  color: black;
-  background-color: white;
-  font-family: var(--main-font);
-  border-radius: none;
-}
 .custom-arrow {
   display: block;
   height: 100%;
   width: 100%;
-  position: absolute;
-  top: 0;
-  right: 0;
-  pointer-events: none;
+  margin-right: 0.3rem;
+  cursor: pointer;
+}
+.custom-arrow img {
+  margin-left: 0.5rem;
 }
 .number-of-items {
   position: absolute;
@@ -197,6 +216,7 @@ select {
   font-weight: "700";
   line-height: "40px";
   margin: 0;
+  padding: 2rem 0;
 }
 .cart-page button {
   display: flex;
@@ -226,7 +246,7 @@ select {
   z-index: 7;
   width: 100%;
   background-color: rgba(57, 55, 72, 0.22);
-  height: calc(100% - 51px);
+  height: calc(100% - 53px);
 }
 .hide-item {
   display: none;
@@ -236,6 +256,11 @@ select {
   max-width: 100%;
   position: relative;
   min-height: 90.5vh;
+}
+.store-container h1 {
+  margin: 0;
+  text-transform: capitalize;
+  padding-top: 3rem;
 }
 .cart-flex-container {
   display: flex;
@@ -317,8 +342,8 @@ select {
   width: 100px;
 }
 .large {
-  min-height: 220px;
-  width: 200px;
+  height: 100%;
+  width: 300px;
 }
 .radio-group input[type="radio"] {
   display: none;
@@ -374,7 +399,7 @@ select {
   padding-top: 4rem;
   display: flex;
   gap: 2rem;
-  height: calc(100vh - 51px);
+  height: 100%;
 }
 .item-pictures {
   display: flex;
@@ -385,10 +410,16 @@ select {
   overflow-x: hidden;
   scrollbar-width: none;
 }
+.item-pictures img {
+  width: 6rem;
+}
 .main-item-picture {
   height: 30rem;
   width: 32rem;
   margin-right: 5rem;
+}
+.item-page-description {
+  max-width: 20rem;
 }
 .item-page-description .radio-group input[type="radio"]:checked + label {
   background: black;
@@ -408,7 +439,6 @@ select {
 .item-page-description h1 {
   padding: 0;
   margin: 0;
-  margin-bottom: 2rem;
 }
 .item-page-description p {
   font-family: "Roboto Condensed";
@@ -416,6 +446,7 @@ select {
 .item-page-description button {
   border-radius: 0;
   padding: 1rem 3rem;
+  margin-bottom: 1rem;
   width: 100%;
   background-color: var(--green-color);
   color: white;
@@ -425,10 +456,62 @@ select {
   background-color: #56b36f;
   cursor: pointer;
 }
-.container {
-  position: relative;
-}
 .largeLabels {
   height: 50px;
   width: 80px;
+}
+.cart-arrows-container {
+  z-index: 10;
+  position: absolute;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  justify-content: space-between;
+  align-items: center;
+}
+.cart-arrows-container img {
+  width: 8px;
+  height: 16px;
+  margin: 10px;
+}
+.cart-arrows-container img:hover {
+  cursor: pointer;
+}
+.cartitem-image {
+  position: relative;
+}
+
+#product-cartItem-image {
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  object-fit: cover;
+  object-position: top;
+}
+
+#no-items-text {
+  padding: 0 1rem;
+}
+#empty-cart-text-large {
+  margin: 2rem;
+}
+#attribute-name-cartitem,
+#attribute-name-item {
+  margin-bottom: 0.5rem;
+}
+.options {
+  position: absolute;
+  box-shadow: 0 1px 5px rgba(168, 172, 176, 0.19);
+
+  background-color: white;
+  top: 45px;
+  right: 90px;
+}
+.options-item {
+  padding: 0.5rem 1.3rem;
+  cursor: pointer;
+}
+.options-item:hover {
+  background-color: rgb(228, 222, 222);
 }

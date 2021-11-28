@@ -3,7 +3,9 @@ import { withRouter } from "react-router";
 import { connect } from "react-redux";
 import { addItem, appendItem } from "../actions/cartItems";
 import isEqual from "lodash/isEqual";
-import { v4 as uuidv4 } from "uuid";
+import ReactHtmlParser from "react-html-parser";
+import PropTypes from "prop-types";
+import { Query, Field, client } from "@tilework/opus";
 
 export class Item extends Component {
   constructor(props) {
@@ -11,6 +13,7 @@ export class Item extends Component {
     this.state = {
       product: {},
       loading: true,
+      noSelectedAttributes: false,
       price: {
         currency: null,
         amount: null,
@@ -18,23 +21,42 @@ export class Item extends Component {
       checkedRadio: {},
     };
   }
-  componentDidMount() {
-    //assigning the product based on the param
-    this.props.products.forEach((product) => {
-      if (product.id === this.props.match.params.itemId) {
-        //setting the initial price
-        let temp = {};
-        product.prices.forEach((price) => {
-          if (price.currency === this.props.currency)
-            temp = { currency: price.currency, amount: price.amount };
-        });
-        this.setState({
-          product: { ...product },
-          loading: false,
-          price: { ...temp },
-        });
-      }
+  getProduct = async (productId) => {
+    const productQuery = new Query("product", true)
+      .addArgument("id", "String!", productId)
+      .addFieldList([
+        "name",
+        "id",
+        "inStock",
+        "category",
+        "gallery",
+        "description",
+        "brand",
+      ])
+      .addField(new Field("prices").addFieldList(["currency", "amount"]))
+      .addField(
+        new Field("attributes")
+          .addFieldList(["name", "id", "type"])
+          .addField(new Field("items").addFieldList(["value", "displayValue"]))
+      );
+
+    const res = await client.post(productQuery);
+
+    let temp = {};
+    res.product.prices.forEach((price) => {
+      if (price.currency === this.props.currency)
+        temp = { currency: price.currency, amount: price.amount };
     });
+
+    this.setState({
+      product: { ...res.product },
+      loading: false,
+      price: { ...temp },
+    });
+  };
+
+  componentDidMount() {
+    this.getProduct(this.props.match.params.itemId);
   }
   //creating fucntions
   findObjectBySelectedAttributes = (object, selectedAttributes) => {
@@ -66,48 +88,43 @@ export class Item extends Component {
   };
 
   render() {
-    const { product, loading } = this.state;
-    const { addItem, cartItems } = this.props;
-    const description = product.description;
+    const { loading, checkedRadio } = this.state;
+    const { addItem, cartItems, appendItem } = this.props;
+    const { gallery, description, name, brand, attributes, inStock, id } =
+      this.state.product;
+
     return (
       <div className="item-page-container">
-        {!loading && product.gallery.length !== 1 && (
+        {!loading && gallery.length !== 1 && (
           <div className="item-pictures">
-            {product.gallery.map((photo) => (
-              <img style={{ width: "6rem" }} src={photo} alt="" />
+            {gallery.map((photo, index) => (
+              <img src={photo} alt="" key={photo + index} />
             ))}
           </div>
         )}
         <div className="main-item-picture">
           {!loading && (
-            <img
-              style={{ width: "100%", height: "100%" }}
-              src={product.gallery[0]}
-              alt=""
-            />
+            <img className="item-main-picture" src={gallery[0]} alt="" />
           )}
         </div>
         <div className="item-page-description">
-          <h1 style={{ fontWeight: "800" }}>{product.name}</h1>
+          <h1 className="strong-font-weight">{brand}</h1>
+          <h2 className="light-font-weight">{name}</h2>
           {!loading &&
-            product.attributes.map((attribute) => (
-              <div>
-                <p
-                  style={{
-                    marginBottom: "0.5rem",
-                  }}
-                >
+            attributes.map((attribute, index) => (
+              <div key={index}>
+                <p id="attribute-name-item">
                   <strong>{attribute.name}:</strong>
                 </p>
                 <div className="radio-group">
                   {attribute.items.map((item, index) => {
                     return (
-                      <div>
+                      <div key={item + index}>
                         <input
                           type="radio"
-                          name={product.id + attribute.id + "itemPage"}
-                          id={product.id + index + attribute.id + "itemPage"}
-                          key={product.id + index + attribute.id + "itemPage"}
+                          name={id + attribute.id + "itemPage"}
+                          id={id + index + attribute.id + "itemPage"}
+                          key={id + index + attribute.id + "itemPage"}
                           value={item.value}
                           onChange={(e) => {
                             this.setCheckedRadio(
@@ -116,26 +133,21 @@ export class Item extends Component {
                             );
                           }}
                           checked={
-                            this.state.checkedRadio !== null
-                              ? this.state.checkedRadio[attribute.id] ===
-                                item.value
+                            checkedRadio !== null
+                              ? checkedRadio[attribute.id] === item.value
                               : false
                           }
                         />
                         {attribute.type === "swatch" ? (
                           <label
-                            htmlFor={
-                              product.id + index + attribute.id + "itemPage"
-                            }
+                            htmlFor={id + index + attribute.id + "itemPage"}
                             style={{
                               backgroundColor: `${item.value}`,
                             }}
                           ></label>
                         ) : (
                           <label
-                            htmlFor={
-                              product.id + index + attribute.id + "itemPage"
-                            }
+                            htmlFor={id + index + attribute.id + "itemPage"}
                           >
                             {item.value}
                           </label>
@@ -150,41 +162,56 @@ export class Item extends Component {
             <strong>PRICE:</strong>
           </p>
           <p>
-            {this.state.price.currency} {this.state.price.amount}
+            {this.props.currencySymbol} {this.state.price.amount}
           </p>
           <button
             onClick={() => {
               if (
-                this.findObjectBySelectedAttributes(
-                  cartItems,
-                  this.state.checkedRadio
-                )
+                checkedRadio &&
+                Object.keys(checkedRadio).length !== attributes.length &&
+                Object.getPrototypeOf(checkedRadio) === Object.prototype
               ) {
-                const productIndex = this.findWithAttr(
-                  cartItems,
-                  "selectedAttributes",
-                  this.state.checkedRadio
-                );
-                const newState = cartItems.slice();
-                newState[productIndex].amount =
-                  cartItems[productIndex].amount + 1;
-                appendItem(newState);
-                this.setState({ checkedRadio: null });
+                this.setState({ noSelectedAttributes: true });
+                setTimeout(() => {
+                  this.setState({ noSelectedAttributes: false });
+                }, 3000);
               } else {
-                addItem({
-                  ...product,
-                  selectedAttributes: { ...this.state.checkedRadio },
-                });
-                this.setState({ checkedRadio: null });
+                if (
+                  this.findObjectBySelectedAttributes(
+                    cartItems,
+                    this.state.checkedRadio
+                  )
+                ) {
+                  const productIndex = this.findWithAttr(
+                    cartItems,
+                    "selectedAttributes",
+                    this.state.checkedRadio
+                  );
+                  const newState = cartItems.slice();
+                  newState[productIndex].amount =
+                    cartItems[productIndex].amount + 1;
+                  appendItem(newState);
+                  this.setState({ checkedRadio: {} });
+                } else {
+                  addItem({
+                    ...this.state.product,
+                    selectedAttributes: { ...this.state.checkedRadio },
+                  });
+                  this.setState({ checkedRadio: {} });
+                }
               }
             }}
+            disabled={!inStock}
+            id={!inStock ? "outOfStockbutton" : ""}
           >
-            ADD TO CART
+            {inStock ? " ADD TO CART" : "OUT OF STOCK"}
           </button>
-          <div
-            style={{ marginTop: "1rem" }}
-            dangerouslySetInnerHTML={{ __html: description }}
-          />
+          {this.state.noSelectedAttributes && (
+            <p className="danger">
+              Please Select the available attributes you want
+            </p>
+          )}
+          <div>{ReactHtmlParser(description)}</div>
         </div>
       </div>
     );
@@ -202,10 +229,19 @@ export class Item extends Component {
     }
   }
 }
+
+Item.propTypes = {
+  currencySymbol: PropTypes.string.isRequired,
+  currency: PropTypes.string.isRequired,
+  cartItems: PropTypes.array.isRequired,
+  addItem: PropTypes.func.isRequired,
+  appendItem: PropTypes.func.isRequired,
+};
+
 const mapStateToProps = (state) => ({
-  products: state.products,
   currency: state.currency,
   cartItems: state.cartItems,
+  currencySymbol: state.currencySymbol,
 });
 
 export default withRouter(

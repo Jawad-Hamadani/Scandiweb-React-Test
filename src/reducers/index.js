@@ -1,14 +1,14 @@
 import { combineReducers } from "redux";
-import products from "./products";
 import currency from "./currency";
 import cartItems from "./cartItems";
 import showCart from "./showCart";
+import currencySymbol from "./currencySybmol";
 
 const rootReducer = combineReducers({
-  products,
   currency,
   cartItems,
   showCart,
+  currencySymbol,
 });
 
 export default rootReducer;

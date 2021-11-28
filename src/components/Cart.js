@@ -3,6 +3,7 @@ import { connect } from "react-redux";
 import CartItem from "./CartItem";
 import { Link } from "react-router-dom";
 import { hideCart } from "../actions/showCart";
+import PropTypes from "prop-types";
 
 export class Cart extends Component {
   constructor(props) {
@@ -10,6 +11,7 @@ export class Cart extends Component {
     this.state = {
       size: null,
       totalPrice: 0,
+      itemQuanitity: 0,
     };
   }
   //creating a function that sets the selectedAttributes in the redux store
@@ -36,6 +38,15 @@ export class Cart extends Component {
       });
     });
   };
+  //creating a function to modify total quantity  of the products in cart
+  settingTotalQuantity() {
+    let finalQuantity = 0;
+    this.props.cartItems.forEach((item) => {
+      finalQuantity += item.amount;
+      this.setState({ itemQuanitity: finalQuantity });
+    });
+  }
+
   //setting the prop as state so it can be passed as props and rerender on change
   static getDerivedStateFromProps(props) {
     return {
@@ -46,22 +57,23 @@ export class Cart extends Component {
   componentDidMount() {
     this.settingTotalPrice();
   }
+
   render() {
-    const { cartItems, showCart, hideCart } = this.props;
-    const { size, currency } = this.props;
+    const { cartItems, showCart, hideCart, size } = this.props;
+    const { itemQuanitity } = this.state;
     if (cartItems.length === 0) {
       //rendering both minicart and cart route if they have no items
       if (size === "small") {
         return (
           <div className={showCart ? "minicart minicart-empty" : " hide-item"}>
-            <p style={{ padding: "0 1rem" }}>
+            <p id="no-items-text ">
               You have not added any items to the cart yet
             </p>
           </div>
         );
       } else if (size === "large") {
         return (
-          <div style={{ margin: "2rem" }}>
+          <div id="empty-cart-text-large">
             You have not added any items to the cart yet
             <br />
             Go to one of the available categories to add items to cart
@@ -73,14 +85,14 @@ export class Cart extends Component {
       return (
         <div className={showCart ? "minicart" : " hide-item"}>
           <p>
-            <span style={{ fontWeight: "700" }}>My Bag, </span>
-            {cartItems.length} items
+            <strong>My Bag, </strong>
+            {itemQuanitity} items
           </p>
           <div className="cart-products-container">
             {cartItems.map((cartItem, index) => (
               <CartItem
                 size={this.state.size}
-                key={cartItem.id}
+                key={index + cartItem.id}
                 rerender={cartItem.amount}
                 cartItem={cartItem}
                 index={index}
@@ -90,9 +102,7 @@ export class Cart extends Component {
           <div className="total-price">
             <p>Total:</p>
             <p>
-              {currency}
-              <span> </span>
-              {this.state.totalPrice.toFixed(2)}
+              {this.props.currencySymbol} {this.state.totalPrice.toFixed(2)}
             </p>
           </div>
           <div className="checkout-buttons">
@@ -113,13 +123,13 @@ export class Cart extends Component {
       //rendering if the cart is large (Cart route)
       return (
         <div className="cart-page">
-          <h1 style={{ padding: "2rem 0" }}>CART</h1>
+          <h1>CART</h1>
           {cartItems.map((cartItem, index) => (
-            <div>
+            <div key={cartItem + index}>
               <hr />
               <CartItem
                 size={this.state.size}
-                key={cartItem.id}
+                key={cartItem.id + index}
                 rerender={cartItem.amount}
                 cartItem={cartItem}
                 index={index}
@@ -129,7 +139,7 @@ export class Cart extends Component {
           <div className="total-price">
             <h2>Total:</h2>
             <h2>
-              {currency}
+              {this.props.currencySymbol}
               <span> </span>
               {this.state.totalPrice.toFixed(2)}
             </h2>
@@ -145,14 +155,26 @@ export class Cart extends Component {
       this.props.currency !== prevProps.currency
     ) {
       this.settingTotalPrice();
+      this.settingTotalQuantity();
     }
   }
 }
+
+Cart.propTypes = {
+  size: PropTypes.string.isRequired,
+  cartItems: PropTypes.array.isRequired,
+  showCart: PropTypes.bool.isRequired,
+  currency: PropTypes.string.isRequired,
+  currencySymbol: PropTypes.string.isRequired,
+  hideCart: PropTypes.func.isRequired,
+};
+
 const mapStateToProps = (state) => {
   return {
     cartItems: state.cartItems,
     showCart: state.showCart,
     currency: state.currency,
+    currencySymbol: state.currencySymbol,
   };
 };
 

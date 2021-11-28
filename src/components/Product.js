@@ -2,8 +2,8 @@ import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { connect } from "react-redux";
 import cart from "../icons/emptycart.png";
-import { addItem, appendItem } from "../actions/cartItems";
 import isEqual from "lodash/isEqual";
+import PropTypes from "prop-types";
 
 class Product extends Component {
   constructor(props) {
@@ -58,14 +58,11 @@ class Product extends Component {
   };
 
   render() {
-    const { product, cartItems, addItem, appendItem } = this.props;
+    const { inStock, gallery, name, id } = this.props.product;
     const { isSelected, price } = this.state;
 
     return (
       <div
-        onClick={() => {
-          product.inStock && this.routeChange(`/item/${product.id}`);
-        }}
         onMouseEnter={() => {
           this.setState({
             isSelected: true,
@@ -76,56 +73,31 @@ class Product extends Component {
             isSelected: false,
           });
         }}
-        className={
-          isSelected && product.inStock ? "selected-product" : "product"
-        }
-        style={{ opacity: !product.inStock ? "0.5" : "1" }}
+        className={isSelected ? "selected-product" : "product"}
+        style={{ opacity: !inStock ? "0.5" : "1" }}
       >
         <div
           className=" product-image"
           style={{
-            backgroundImage: `url(${product.gallery[0]})`,
+            backgroundImage: `url(${gallery[0]})`,
           }}
         >
-          {!product.inStock && <h2>OUT OF STOCK</h2>}
+          {!inStock && <h2>OUT OF STOCK</h2>}
         </div>
-        {isSelected && product.inStock && (
+        {isSelected && (
           <div
-            className="cart-image-green"
-            onClick={(e) => {
-              //so the event doesn't bubble up
-              e.stopPropagation();
-              if (
-                this.findObjectBySelectedAttributes(cartItems, {}, product.id)
-              ) {
-                const productIndex = this.findWithAttr(
-                  cartItems,
-                  "selectedAttributes",
-                  "id",
-                  {},
-                  product.id
-                );
-                const newState = cartItems.slice();
-                newState[productIndex].amount =
-                  cartItems[productIndex].amount + 1;
-                appendItem(newState);
-              } else {
-                addItem({
-                  ...product,
-                  selectedAttributes: {},
-                });
-              }
+            onClick={() => {
+              this.routeChange(`/item/${id}`);
             }}
+            className="cart-image-green"
           >
             <img src={cart} alt="cart" />
           </div>
         )}
-        <p className="product-name">{product.name}</p>
+        <p className="product-name">{name}</p>
         {this.state.price !== null && (
           <p className="product-price">
-            {price.currency}
-            <span> </span>
-            {price.amount}
+            {this.props.currencySymbol} {price.amount}
           </p>
         )}
       </div>
@@ -146,11 +118,16 @@ class Product extends Component {
     }
   }
 }
+
+Product.propTypes = {
+  currencySymbol: PropTypes.string.isRequired,
+  currency: PropTypes.string.isRequired,
+  product: PropTypes.object.isRequired,
+};
+
 const mapStateToProps = (state) => ({
   currency: state.currency,
-  cartItems: state.cartItems,
+  currencySymbol: state.currencySymbol,
 });
 
-export default withRouter(
-  connect(mapStateToProps, { addItem, appendItem })(Product)
-);
+export default withRouter(connect(mapStateToProps, {})(Product));

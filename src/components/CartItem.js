@@ -2,6 +2,9 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import { removeItem, changeItemAmount } from "../actions/cartItems";
 import { changeSelectedAttribute } from "../actions/cartItems";
+import arrowleft from "../icons/arrowleft.png";
+import arrowright from "../icons/arrowright.png";
+import PropTypes from "prop-types";
 
 class CartItem extends Component {
   constructor(props) {
@@ -9,6 +12,7 @@ class CartItem extends Component {
     this.state = {
       price: null,
       selectedAttributes: {},
+      selectedPhotoNumber: 0,
     };
   }
   setSelectedAttributes = (key, value) => {
@@ -20,6 +24,30 @@ class CartItem extends Component {
       },
     });
   };
+
+  incrementSelectedPhotoNumber = () => {
+    if (
+      this.state.selectedPhotoNumber <
+      this.props.cartItem.gallery.length - 1
+    ) {
+      this.setState((prevState) => {
+        return {
+          selectedPhotoNumber: prevState.selectedPhotoNumber + 1,
+        };
+      });
+    }
+  };
+
+  decrementSelectedPhotoNumber = () => {
+    if (this.state.selectedPhotoNumber > 0) {
+      this.setState((prevState) => {
+        return {
+          selectedPhotoNumber: prevState.selectedPhotoNumber - 1,
+        };
+      });
+    }
+  };
+
   componentDidMount() {
     let temp = {};
     this.props.cartItem.prices.forEach((price) => {
@@ -36,28 +64,33 @@ class CartItem extends Component {
 
   render() {
     const { size, cartItem, changeItemAmount, removeItem, index } = this.props;
-    const { price } = this.state;
+    const { price, selectedPhotoNumber } = this.state;
+    const { name, brand, id, gallery, attributes, amount } =
+      this.props.cartItem;
 
     return (
       <div className="cart-flex-container">
         <div className="cart-item-description">
           {size === "small" ? (
-            <p>{cartItem.name}</p>
+            <p>{name}</p>
           ) : (
-            <h1 style={{ fontWeight: "700" }}>{cartItem.name}</h1>
+            <>
+              <h1 className="strong-font-weight">{brand}</h1>
+              <h2 className="light-font-weight">{name}</h2>
+            </>
           )}
           {this.state.price !== null && (
-            <p style={{ fontWeight: "700" }}>
-              {price.currency}
+            <p className="strong-font-weight">
+              {this.props.currencySymbol}
               <span> </span>
               {price.amount}
             </p>
           )}
 
-          {cartItem.attributes.map((attribute) => (
-            <div>
-              <p style={{ marginBottom: "0.5rem" }}>
-                <strong>{attribute.name}:</strong>
+          {attributes.map((attribute, index) => (
+            <div key={index}>
+              <p className="strong-font-weight" id="attribute-name-cartitem">
+                {attribute.name}:
               </p>
               <div
                 className={
@@ -66,24 +99,21 @@ class CartItem extends Component {
               >
                 {attribute.items.map((item, index) => {
                   return (
-                    <div>
+                    <div key={item + index}>
                       <input
                         type="radio"
                         name={
-                          cartItem.id +
-                          attribute.id +
-                          this.props.index +
-                          this.props.size
+                          id + attribute.id + this.props.index + this.props.size
                         }
                         id={
-                          cartItem.id +
+                          id +
                           attribute.id +
                           index +
                           this.props.index +
                           this.props.size
                         }
                         key={
-                          cartItem.id +
+                          id +
                           attribute.id +
                           index +
                           this.props.index +
@@ -105,9 +135,11 @@ class CartItem extends Component {
                       />
                       {attribute.type === "swatch" ? (
                         <label
-                          className={size === "large" && "largeLabels"}
+                          className={
+                            size === "large" ? "largeLabels" : undefined
+                          }
                           htmlFor={
-                            cartItem.id +
+                            id +
                             attribute.id +
                             index +
                             this.props.index +
@@ -119,9 +151,11 @@ class CartItem extends Component {
                         ></label>
                       ) : (
                         <label
-                          className={size === "large" && "largeLabels"}
+                          className={
+                            size === "large" ? "largeLabels" : undefined
+                          }
                           htmlFor={
-                            cartItem.id +
+                            id +
                             attribute.id +
                             index +
                             this.props.index +
@@ -143,20 +177,20 @@ class CartItem extends Component {
             <button
               onClick={() => {
                 const clone = { ...cartItem };
-                clone.amount = cartItem.amount + 1;
+                clone.amount = amount + 1;
                 changeItemAmount(clone, index);
               }}
             >
               +
             </button>
-            <p key={cartItem.amount}>{cartItem.amount}</p>
+            <p key={amount}>{amount}</p>
             <button
               onClick={() => {
-                if (cartItem.amount === 1) {
+                if (amount === 1) {
                   removeItem(index);
                 } else {
                   const clone = { ...cartItem };
-                  clone.amount = cartItem.amount - 1;
+                  clone.amount = amount - 1;
                   changeItemAmount(clone, index);
                 }
               }}
@@ -164,11 +198,33 @@ class CartItem extends Component {
               -
             </button>
           </div>
-          <img
-            className={size === "small" ? " small" : " large"}
-            src={cartItem.gallery[0]}
-            alt="item"
-          />
+          <div
+            className={
+              size === "small"
+                ? " small cartitem-image"
+                : "  cartitem-image large"
+            }
+          >
+            <img
+              id="product-cartItem-image"
+              src={gallery[selectedPhotoNumber]}
+              alt=""
+            />
+            {this.props.size === "large" && gallery.length !== 1 && (
+              <div className="cart-arrows-container">
+                <img
+                  onClick={this.decrementSelectedPhotoNumber}
+                  src={arrowleft}
+                  alt=""
+                />
+                <img
+                  onClick={this.incrementSelectedPhotoNumber}
+                  src={arrowright}
+                  alt=""
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -191,8 +247,21 @@ class CartItem extends Component {
     }
   }
 }
+
+CartItem.propTypes = {
+  currencySymbol: PropTypes.string.isRequired,
+  currency: PropTypes.string.isRequired,
+  changeItemAmount: PropTypes.func.isRequired,
+  removeItem: PropTypes.func.isRequired,
+  changeSelectedAttribute: PropTypes.func.isRequired,
+  size: PropTypes.string.isRequired,
+  cartItem: PropTypes.object.isRequired,
+  index: PropTypes.number.isRequired,
+};
+
 const mapStateToProps = (state) => ({
   currency: state.currency,
+  currencySymbol: state.currencySymbol,
 });
 export default connect(mapStateToProps, {
   changeItemAmount,

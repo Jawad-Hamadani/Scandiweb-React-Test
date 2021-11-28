@@ -1,9 +1,7 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router-dom";
-import { Query, client } from "@tilework/opus";
-import { connect } from "react-redux";
-import { getProducts } from "../actions/products";
-import { hideCart } from "../actions/showCart";
+import { Query, client, Field } from "@tilework/opus";
+
 //import components
 import Product from "./Product";
 
@@ -18,9 +16,32 @@ class Store extends Component {
     super();
     this.state = {
       categories: [],
+      products: [],
       loading: true,
     };
   }
+  //create categories'query based on the match.param and fetch each category's items
+  getCategsProducts = async (categoryName) => {
+    const productQuery = new Query("category", true)
+      .addArgument("input", "CategoryInput", categoryName)
+      .addField(
+        new Field("products")
+          .addFieldList([
+            "name",
+            "id",
+            "inStock",
+            "category",
+            "gallery",
+            "description",
+            "brand",
+          ])
+          .addField(new Field("prices").addFieldList(["currency", "amount"]))
+      );
+
+    const res = await client.post(productQuery);
+    this.setState({ products: [...res.category.products], loading: false });
+  };
+
   componentDidMount() {
     const categsData = client.post(getCategsQuery);
     // fetching categories and setting them in state
@@ -31,38 +52,35 @@ class Store extends Component {
       });
       this.setState({
         categories: [...this.state.categories, ...arr],
-        loading: false,
       });
     });
-    this.props.getProducts();
+    //fetching products based on categories
+    this.getCategsProducts({ title: this.props.match.params.title });
   }
+
   render() {
-    const title = this.props.match.params.title;
+    const { title } = this.props.match.params;
     //rendering store based on category using react router params
     if (this.state.categories.includes(title)) {
-      return (
-        <div style={{ position: "relative" }}>
-          <div className="store-container">
-            <h1
-              style={{
-                textTransform: "capitalize",
-                paddingTop: "3rem",
-                margin: "0",
-              }}
-            >
-              {title}
-            </h1>
-            <div id="products-container">
-              {this.props.products.map(
-                (product) =>
-                  product.category === title && (
-                    <Product key={product.id} product={product} />
-                  )
-              )}
+      if (this.state.loading) {
+        return <h1>Loading...</h1>;
+      } else {
+        return (
+          <div className="relative">
+            <div className="store-container">
+              <h1>{title}</h1>
+              <div id="products-container">
+                {this.state.products.map(
+                  (product) =>
+                    product.category === title && (
+                      <Product key={product.id} product={product} />
+                    )
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      );
+        );
+      }
     } else {
       return (
         <>
@@ -71,13 +89,11 @@ class Store extends Component {
       );
     }
   }
+  componentDidUpdate(prevProps) {
+    if (this.props.match.params.title !== prevProps.match.params.title) {
+      this.getCategsProducts({ title: this.props.match.params.title });
+    }
+  }
 }
 
-const mapStateToProps = (state) => ({
-  products: state.products,
-  showCart: state.showCart,
-});
-
-export default connect(mapStateToProps, { getProducts, hideCart })(
-  withRouter(Store)
-);
+export default withRouter(Store);
