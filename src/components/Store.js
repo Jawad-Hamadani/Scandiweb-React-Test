@@ -36,6 +36,13 @@ class Store extends Component {
             "brand",
           ])
           .addField(new Field("prices").addFieldList(["currency", "amount"]))
+          .addField(
+            new Field("attributes")
+              .addFieldList(["name", "id", "type"])
+              .addField(
+                new Field("items").addFieldList(["value", "displayValue"])
+              )
+          )
       );
 
     const res = await client.post(productQuery);

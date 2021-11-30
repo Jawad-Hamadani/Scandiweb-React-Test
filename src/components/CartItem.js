@@ -72,7 +72,10 @@ class CartItem extends Component {
       <div className="cart-flex-container">
         <div className="cart-item-description">
           {size === "small" ? (
-            <p>{name}</p>
+            <>
+              <p className="strong-font-weight">{brand}</p>
+              <p>{name}</p>
+            </>
           ) : (
             <>
               <h1 className="strong-font-weight">{brand}</h1>

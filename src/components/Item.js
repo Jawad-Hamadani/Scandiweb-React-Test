@@ -19,6 +19,7 @@ export class Item extends Component {
         amount: null,
       },
       checkedRadio: {},
+      selectedImageForDisplay: 0,
     };
   }
   getProduct = async (productId) => {
@@ -88,7 +89,7 @@ export class Item extends Component {
   };
 
   render() {
-    const { loading, checkedRadio } = this.state;
+    const { loading, checkedRadio, selectedImageForDisplay } = this.state;
     const { addItem, cartItems, appendItem } = this.props;
     const { gallery, description, name, brand, attributes, inStock, id } =
       this.state.product;
@@ -98,13 +99,24 @@ export class Item extends Component {
         {!loading && gallery.length !== 1 && (
           <div className="item-pictures">
             {gallery.map((photo, index) => (
-              <img src={photo} alt="" key={photo + index} />
+              <img
+                src={photo}
+                alt=""
+                key={photo + index}
+                onClick={() => {
+                  this.setState({ selectedImageForDisplay: index });
+                }}
+              />
             ))}
           </div>
         )}
         <div className="main-item-picture">
           {!loading && (
-            <img className="item-main-picture" src={gallery[0]} alt="" />
+            <img
+              className="item-main-picture"
+              src={gallery[selectedImageForDisplay]}
+              alt=""
+            />
           )}
         </div>
         <div className="item-page-description">

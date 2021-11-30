@@ -4,6 +4,7 @@ import { connect } from "react-redux";
 import cart from "../icons/emptycart.png";
 import isEqual from "lodash/isEqual";
 import PropTypes from "prop-types";
+import { addItem } from "../actions/cartItems";
 
 class Product extends Component {
   constructor(props) {
@@ -11,6 +12,7 @@ class Product extends Component {
     this.state = {
       isSelected: false,
       price: null,
+      defaultAttributes: {},
     };
   }
   //function to dynamically go to route when product is clicked
@@ -28,6 +30,9 @@ class Product extends Component {
     });
     this.setState({
       price: { ...temp },
+    });
+    this.props.product.attributes.forEach((attribute) => {
+      this.setDefaultAttribute(attribute.name, attribute.items[0].value);
     });
   }
 
@@ -57,12 +62,26 @@ class Product extends Component {
     return -1;
   };
 
+  setDefaultAttribute = (attributeName, attribute) => {
+    this.setState((prevState) => {
+      let temp = { ...prevState.defaultAttributes };
+      temp[attributeName] = { ...temp[attributeName] };
+      temp[attributeName] = attribute;
+
+      return {
+        defaultAttributes: { ...temp },
+      };
+    });
+  };
   render() {
-    const { inStock, gallery, name, id } = this.props.product;
+    const { inStock, gallery, name, id, brand } = this.props.product;
     const { isSelected, price } = this.state;
 
     return (
       <div
+        onClick={() => {
+          this.routeChange(`/item/${id}`);
+        }}
         onMouseEnter={() => {
           this.setState({
             isSelected: true,
@@ -86,15 +105,23 @@ class Product extends Component {
         </div>
         {isSelected && (
           <div
-            onClick={() => {
-              this.routeChange(`/item/${id}`);
+            onClick={(e) => {
+              e.stopPropagation();
+              if (inStock) {
+                this.props.addItem({
+                  ...this.props.product,
+                  selectedAttributes: { ...this.state.defaultAttributes },
+                });
+              }
             }}
             className="cart-image-green"
           >
             <img src={cart} alt="cart" />
           </div>
         )}
-        <p className="product-name">{name}</p>
+        <p className="product-name">
+          {brand} {name}
+        </p>
         {this.state.price !== null && (
           <p className="product-price">
             {this.props.currencySymbol} {price.amount}
@@ -130,4 +157,4 @@ const mapStateToProps = (state) => ({
   currencySymbol: state.currencySymbol,
 });
 
-export default withRouter(connect(mapStateToProps, {})(Product));
+export default withRouter(connect(mapStateToProps, { addItem })(Product));
